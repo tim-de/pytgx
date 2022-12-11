@@ -13,16 +13,19 @@ class TgxFileIdentifier:
         return self.high == other.high and self.low == other.low
     def __ne__(self, other):
         return not self == other
+
+    def __hash__(self):
+        return hash((self.low, self.high))
     
 class TgxSubFile:
     filepath = ""
     checksum = 0
     filelen = 0
-    ident = TgxFileIdentifier()
     startoffset = 0
     endoffset = 0
 
     def __init__(self, buf):
+        self.ident = TgxFileIdentifier()
         (bytepath,
          self.checksum,
          self.filelen,
@@ -38,10 +41,10 @@ class TgxSubFile:
         start => 0x{self.startoffset:04x}, end => 0x{self.endoffset:04x}\n'
 
 class TgxLenSpec:
-    ident = TgxFileIdentifier()
     length = 0
 
     def __init__(self, buf):
+        self.ident = TgxFileIdentifier()
         (self.length,
          self.ident.low, self.ident.high) = struct.unpack("8x I II", buf)
         
@@ -61,32 +64,24 @@ class TgxHeader:
              self.filecount) = struct.unpack("12x I I I 40x I 48x", buf)
             for index in range(self.filecount):
                 buf = fh.read(104)
-                self.subfiles[str(TgxSubFile(buf).ident)]=TgxSubFile(buf)
-                print(TgxSubFile(buf))
+                tempsubfilehdr = TgxSubFile(buf)
+                self.subfiles[tempsubfilehdr.ident]=tempsubfilehdr
 
-            for ident in self.subfiles:
-                print(ident, self.subfiles[ident])
             lengthspecs = []
             for index in range(self.filecount):
                 buf = fh.read(20)
-                templspec = TgxLenSpec(buf)
-                print(str(templspec.ident))
-                lengthspecs.append(templspec)
-            print([str(lspec.ident) for lspec in lengthspecs])
+                lengthspecs.append(TgxLenSpec(buf))
                 
             for lspec in lengthspecs:
-                print(lspec.length, lspec.ident)
-                ident = str(lspec.ident)
-
                 buf = fh.read(8)
-                (self.subfiles[ident].startoffset,
-                 self.subfiles[ident].endoffset) = struct.unpack("I I", buf)
+                (self.subfiles[lspec.ident].startoffset,
+                 self.subfiles[lspec.ident].endoffset) = struct.unpack("I I", buf)
 
 if __name__ == "__main__":
     infile = "/home/timot/.wine/drive_c/Program Files (x86)/Kohan Ahrimans Gift/Terst.tgx"
     tgxhdr = TgxHeader()
     tgxhdr.parsefile(infile)
     print(tgxhdr.version, tgxhdr.filelen, tgxhdr.filecount)
-    for ix in tgxhdr.subfiles:
-        print(ix)
-        print(tgxhdr.subfiles[ix])
+    for index in tgxhdr.subfiles:
+        print(index)
+        print(tgxhdr.subfiles[index])
