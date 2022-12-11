@@ -42,9 +42,10 @@ class SubFile:
         ident => {self.ident}\n\
         start => 0x{self.startoffset:04x}, end => 0x{self.endoffset:04x}\n'
 
-    def dump(self, infilehandle, rootdirname, blocksize=1024):
+    def dump(self, infilehandle, rootdirname, blocksize=1024, verbose=False):
+        if verbose:
+            print(f"\33[2K\rDumping {self.filepath}", end="")
         writepath = Path(".", rootdirname, self.filepath)
-        print(writepath)
         writedir = Path("/".join(writepath.parts[:-1]))
         writedir.mkdir(mode=0o777, parents=True, exist_ok=True)
         infilehandle.seek(self.startoffset)
@@ -71,15 +72,20 @@ class Header:
     filelen = 0
     filecount = 0
     subfiles = {}
-    def parsefile(self, filename):
+    def parsefile(self, filename, verbose=False):
         self.filename = Path(filename.replace("\\", "/"))
         with self.filename.open(mode="rb") as fh:
+            if verbose:
+                print(f"Reading file {self.filename}")
             buf = fh.read(116)
             #print(buf)
             (self.version,
              self.checksum,
              self.filelen,
              self.filecount) = struct.unpack("12x I I I 40x I 48x", buf)
+            if verbose:
+                print(f"Parsed header for {self.filename}\nVersion => {self.version}\nChecksum => {self.checksum:08x}\nLength => {self.filelen}B\nSubfiles => {self.filecount}")
+                print("Parsing subfile headers")
             for index in range(self.filecount):
                 buf = fh.read(104)
                 tempsubfilehdr = SubFile(buf)
@@ -94,12 +100,19 @@ class Header:
                 buf = fh.read(8)
                 (self.subfiles[lspec.ident].startoffset,
                  self.subfiles[lspec.ident].endoffset) = struct.unpack("I I", buf)
+            if verbose:
+                print(f"Parsing headers in {self.filename} complete")
 
-    def dump(self):
+    def dump(self, basedirname, verbose=False):
         with self.filename.open(mode="rb") as infilehandle:
-            basedirname = self.filename.parts[-1].split(".")[0]
+            if basedirname == "":
+                basedirname = ".".join(self.filename.parts[-1].split(".")[:-1])
+            if verbose:
+                print(f"Dumping {self.filecount} subfiles", end="")
             for ident in self.subfiles:
-                self.subfiles[ident].dump(infilehandle, basedirname)
+                self.subfiles[ident].dump(infilehandle, basedirname, verbose=verbose)
+            if verbose:
+                print("\33[2K\rDone!")
 
 if __name__ == "__main__":
     print("This is a library file, intended to be imported by another python program")
