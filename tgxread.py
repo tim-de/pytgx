@@ -24,7 +24,7 @@ class SubFile:
     checksum = 0
     filelen = 0
     startoffset = 0
-    endoffset = 0
+    endoffset = 0,
 
     def __init__(self, buf):
         self.ident = FileIdentifier()
@@ -42,9 +42,12 @@ class SubFile:
         ident => {self.ident}\n\
         start => 0x{self.startoffset:04x}, end => 0x{self.endoffset:04x}\n'
 
-    def dump(self, infilehandle, rootdirname, blocksize=1024, verbose=False):
-        if verbose:
-            print(f"\33[2K\rDumping {self.filepath}", end="")
+    def dump(self, infilehandle, rootdirname, blocksize=1024, verbosity=1):
+        if verbosity > 0:
+            if verbosity == 1:
+                print(f"\33[2K\rDumping {self.filepath}", end="")
+            else:
+                print(f"Dumping {self.filepath}")
         writepath = Path(".", rootdirname, self.filepath)
         writedir = Path("/".join(writepath.parts[:-1]))
         writedir.mkdir(mode=0o777, parents=True, exist_ok=True)
@@ -72,19 +75,22 @@ class Header:
     filelen = 0
     filecount = 0
     subfiles = {}
-    def parsefile(self, filename, verbose=False):
+    def parsefile(self, filename, verbosity=1):
         self.filename = Path(filename.replace("\\", "/"))
         with self.filename.open(mode="rb") as fh:
-            if verbose:
+            if verbosity > 0:
                 print(f"Reading file {self.filename}")
             buf = fh.read(116)
             #print(buf)
-            (self.version,
+            (version,
              self.checksum,
              self.filelen,
-             self.filecount) = struct.unpack("12x I I I 40x I 48x", buf)
-            if verbose:
-                print(f"Parsed header for {self.filename}\nVersion => {self.version}\nChecksum => {self.checksum:08x}\nLength => {self.filelen}B\nSubfiles => {self.filecount}")
+             byteshortname,
+             self.filecount) = struct.unpack("12x I I I 12x 2s 26x I 48x", buf)
+            self.version = unpack_version_number(version)
+            self.shortname = byteshortname.decode("ascii")
+            if verbosity > 0:
+                print(f"Parsed header for {self.filename} ({self.shortname})\nVersion => {self.version}\nChecksum => {self.checksum:08x}\nLength => {self.filelen}B\nSubfiles => {self.filecount}")
                 print("Parsing subfile headers")
             for index in range(self.filecount):
                 buf = fh.read(104)
@@ -100,19 +106,32 @@ class Header:
                 buf = fh.read(8)
                 (self.subfiles[lspec.ident].startoffset,
                  self.subfiles[lspec.ident].endoffset) = struct.unpack("I I", buf)
-            if verbose:
-                print(f"Parsing headers in {self.filename} complete")
+                if verbosity == 2:
+                    print(self.subfiles[lspec.ident])
+            if verbosity > 0:
+                print("All headers parsed")
 
-    def dump(self, basedirname, verbose=False):
+    def dump(self, basedirname, verbosity=1):
         with self.filename.open(mode="rb") as infilehandle:
             if basedirname == "":
                 basedirname = ".".join(self.filename.parts[-1].split(".")[:-1])
-            if verbose:
-                print(f"Dumping {self.filecount} subfiles", end="")
+            if verbosity > 0:
+                print(f"Dumping {self.filecount} subfiles")
             for ident in self.subfiles:
-                self.subfiles[ident].dump(infilehandle, basedirname, verbose=verbose)
-            if verbose:
-                print("\33[2K\rDone!")
+                self.subfiles[ident].dump(infilehandle, basedirname, verbosity=verbosity)
+            if verbosity > 0:
+                if verbosity == 1:
+                    print("\33[2K\r", end="")
+                print("Done!")
 
+def unpack_version_number(packed_version):
+    unpacked_version = f"{packed_version % 100}"
+    packed_version = int(packed_version / 100)
+    while packed_version != 0:
+        unpacked_version = f"{packed_version % 100}.{unpacked_version}"
+        packed_version = int(packed_version / 100)
+    return unpacked_version
+    
+                
 if __name__ == "__main__":
     print("This is a library file, intended to be imported by another python program")

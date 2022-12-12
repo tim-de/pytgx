@@ -10,8 +10,12 @@ if __name__ == "__main__":
                           help="The path to a .tgx file to unpack")
     cmdparse.add_argument("-o", "--outfile", nargs="?", required=False, default="", dest= "outfile",
                           help="The name of the directory to store the output")
-    cmdparse.add_argument("-v", "--verbose", action="store_true", required=False, default=False, dest="verbose",
-                               help="Display information about the extraction")
+    
+    verbage = cmdparse.add_mutually_exclusive_group()
+    verbage.add_argument("-v", "--verbose", action="store_const", required=False, const=2, default=1, dest="verbosity",
+                          help="Display more information about the extracted files")
+    verbage.add_argument("-q", "--quiet", action="store_const", required=False, const=0, default=1, dest="verbosity",
+                          help="Suppress console output")
 
     args = cmdparse.parse_args()
     
@@ -19,5 +23,5 @@ if __name__ == "__main__":
         cmdparse.print_usage()
         exit()
     tgxhdr = tgxread.Header()
-    tgxhdr.parsefile(args.filename, args.verbose)
-    tgxhdr.dump(args.outfile, args.verbose)
+    tgxhdr.parsefile(args.filename, args.verbosity)
+    tgxhdr.dump(args.outfile, args.verbosity)
