@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import tgxread
+import tgxlib
 import argparse
 
 if __name__ == "__main__":
@@ -22,6 +22,6 @@ if __name__ == "__main__":
     if args.filename == "":
         cmdparse.print_usage()
         exit()
-    tgxhdr = tgxread.Header()
+    tgxhdr = tgxlib.Header()
     tgxhdr.parsefile(args.filename, args.verbosity)
     tgxhdr.dump(args.outfile, args.verbosity)
