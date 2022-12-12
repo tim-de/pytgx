@@ -45,7 +45,8 @@ class SubFile:
     def dump(self, infilehandle, rootdirname, blocksize=1024, verbosity=1):
         if verbosity > 0:
             if verbosity == 1:
-                print(f"\33[2K\rDumping {self.filepath}", end="")
+                printline = f"\rDumping {self.filepath}"
+                print(printline + (" " * (80-len(printline))), end="")
             else:
                 print(f"Dumping {self.filepath}")
         writepath = Path(".", rootdirname, self.filepath)
