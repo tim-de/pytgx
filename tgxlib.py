@@ -31,8 +31,10 @@ class SubFile:
         (bytepath,
          self.checksum,
          self.filelen,
-         self.ident.low, self.ident.high) = struct.unpack("80s I I II 8x", buf)
+         self.ident.low, self.ident.high,
+         self.p1, self.p2) = struct.unpack("80s I I II II", buf)
         self.filepath = Path(bytepath.decode('ascii').replace("\\", "/").replace("\0", ""))
+        #self.filepath = Path(str(self.p1), bytepath.decode('ascii').replace("\0", "").split("\\")[-1])
 
     def __str__(self):
         return f'\
