@@ -52,7 +52,7 @@ class SubFile:
             else:
                 print(f"Dumping {self.filepath}")
         writepath = Path(".", rootdirname, self.filepath)
-        writedir = Path("/".join(writepath.parts[:-1]))
+        writedir = writepath.parents[0]
         writedir.mkdir(mode=0o777, parents=True, exist_ok=True)
         infilehandle.seek(self.startoffset)
         position = self.startoffset

@@ -11,14 +11,15 @@ def checksum_32(filename, blocksize=2048):
             buf = infilehandle.read(blocksize)
             if len(buf) < blocksize:
                 # if buf is shorter than blocksize then we've reached the end of the file
-                if len(buf) < 4:
-                    if len(buf) == 0:
+                blocksize = len(buf)
+                if blocksize < 4:
+                    if blocksize == 0:
                         break
-                    buf += b'\0' * (4 - len(buf))
+                    buf += b'\0' * (4 - blocksize)
                 else:
-                    buf += b'\0' * (len(buf) % 4) # ensure buf is 32 bit aligned
+                    buf += b'\0' * (blocksize % 4) # ensure buf is 32 bit aligned
                 eof = True
-            u32vals = struct.unpack("<{0}I".format(len(buf)//4), buf)
+            u32vals = struct.unpack("<{0}I".format(blocksize//4), buf)
             for u32value in u32vals:
                 checksum ^= u32value
     return(checksum)
