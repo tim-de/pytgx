@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 
 class FileIdentifier:
+    """A class to contain the file index that specifies a file's place within the
+    .TGX/.TGW file"""           # Not fully understood as of 01/02/23 --- timoT
     low = 0
     high = 0
 
@@ -20,6 +22,7 @@ class FileIdentifier:
         return hash((self.low, self.high))
     
 class SubFile:
+    """A class to represent a file contained within a .TGX or .TGW archive file"""
     filepath = ""
     checksum = 0
     filelen = 0
@@ -34,6 +37,8 @@ class SubFile:
          self.ident.low, self.ident.high,
          self.p1, self.p2) = struct.unpack("80s I I II II", buf)
         self.filepath = Path(bytepath.decode('ascii').replace("\\", "/").replace("\0", ""))
+        # Comment out the line above, and uncomment the one below to use the last two words of the
+        # filespec to determine the subdirectory rather than the filepath listed in the header.
         #self.filepath = Path(str(self.p1), bytepath.decode('ascii').replace("\0", "").split("\\")[-1])
 
     def __str__(self):
@@ -45,6 +50,9 @@ class SubFile:
         start => 0x{self.startoffset:04x}, end => 0x{self.endoffset:04x}\n'
 
     def dump(self, infilehandle, rootdirname, blocksize=1024, verbosity=1):
+        """ Dump the contents of a subfile into the correct subdirectory under
+        'rootdirname', copying 'blocksize' bytes at a time to not use too much
+        RAM when copying large files"""
         if verbosity > 0:
             if verbosity == 1:
                 printline = f"\rDumping {self.filepath}"
@@ -65,6 +73,8 @@ class SubFile:
                 position += blocksize
 
 class LenSpec:
+    # Could probably replace with a function, but what would code in an
+    # object-oriented language be without a little class-explosion
     length = 0
 
     def __init__(self, buf):
@@ -73,6 +83,11 @@ class LenSpec:
          self.ident.low, self.ident.high) = struct.unpack("8x I II", buf)
         
 class Header:
+    """A class to represent the header information at the start of
+    a .TGX/.TGW file. It contains a dictionary of subfiles, referenced
+    by the identifier given to them within the archive file, so that
+    their offsets may be correctly retreived from the source file as
+    needed."""
     version = 0
     checksum = 0
     filelen = 0
@@ -115,6 +130,7 @@ class Header:
                 print("All headers parsed")
 
     def dump(self, basedirname, verbosity=1):
+        """Dumps all the subfiles by calling the Subfile.dump method on each of them."""
         with self.filename.open(mode="rb") as infilehandle:
             if basedirname == "":
                 basedirname = ".".join(self.filename.parts[-1].split(".")[:-1])
@@ -128,6 +144,7 @@ class Header:
                 print("Done!")
 
 def unpack_version_number(packed_version):
+    """Unpacks the version number of the file from the form it appears in within the file."""
     unpacked_version = f"{packed_version % 100}"
     packed_version = int(packed_version / 100)
     while packed_version != 0:
@@ -137,4 +154,4 @@ def unpack_version_number(packed_version):
     
                 
 if __name__ == "__main__":
-    print("This is a library file, intended to be imported by another python program")
+    pass
