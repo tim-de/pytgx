@@ -1,6 +1,7 @@
 #!/usr/bin/pypy3
 
 import struct
+import sys
 
 def checksum_32(filename, blocksize=2048):
     blocksize += blocksize % 4 # ensure blocks are 32 bit aligned
@@ -25,4 +26,7 @@ def checksum_32(filename, blocksize=2048):
     return(checksum)
 
 if __name__ == "__main__":
-    print("0x{0:08x}".format(checksum_32("/home/timot/.wine/drive_c/Program Files (x86)/Kohan Ahrimans Gift/Kohan_AG.tgw"), 512))
+    if len(sys.argv) < 2:
+        print("Please provide a file to analyse")
+        exit()
+    print("0x{0:08x}".format(checksum_32("sys.argv[1]"), 512))
