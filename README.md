@@ -36,17 +36,17 @@ The structure of it seems to be as follows:
 | :---: | :-------------- |
 | `0x00` | magic number |
 | `0x04` | unknown |
-| `0x08` | constant?        |
-| `0x0c` | packed version   |
-| `0x10` | XOR checksum     |
-| `0x14` | file length      |
+| `0x08` | constant? |
+| `0x0c` | packed version |
+| `0x10` | XOR checksum |
+| `0x14` | file length |
 | `....` | unknown |
-| `0x3c` | filespec offset  |
-| `0x40` | filespec count   |
-| `0x44` | filecount offset |
-| `0x48` | file count       |
-| `0x4c` | unknown          |
-| `0x50` | file count       |
+| `0x3c` | filespec offset |
+| `0x40` | filespec count |
+| `0x44` | filelength offset |
+| `0x48` | filelength count |
+| `0x4c` | filepos offset |
+| `0x50` | filepos count |
 	
 The magic number appears to denote a .tgx file with `0x0001000f`
 and a .tgw file with `0x0001000c`.
