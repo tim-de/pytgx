@@ -1,6 +1,6 @@
 # tgxlib: Tools for working with .TGX game asset files
 
-# TGX file format
+## TGX file format
 
 The TGX/TGW file format is a proprietary archive file format
 used by TimeGate studios to store asset files for some of their
@@ -32,35 +32,21 @@ yet possible to write these files.
 
 The structure of it seems to be as follows:
 
-	 0x00 |  magic number  |
-	------|----------------|
-	 0x04 |    unknown     |
-	------|----------------|
-	 0x08 |    constant?   |
-	------|----------------|
-	 0x0c | packed version |
-	------|----------------|
-	 0x10 |  XOR checksum  |
-	------|----------------|
-	 0x14 |  file length   |
-	------|----------------|
-	////////////////////////
-	//	    unknown       //
-	////////////////////////
-	------|----------------|
-	 0x40 |   file count   |
-	------|----------------|
-	 0x44 |    unknown     |
-	------|----------------|
-	 0x48 |   file count   |
-	------|----------------|
-	 0x4c |    unknown     |
-	------|----------------|
-	 0x50 |   file count   |
-	------|----------------|
-	////////////////////////
-	// unknown until 0x80 //
-	//                    //
+| offset | value |
+| :---: | :-------------- |
+| `0x00` | magic number |
+| `0x04` | unknown |
+| `0x08` | constant?        |
+| `0x0c` | packed version   |
+| `0x10` | XOR checksum     |
+| `0x14` | file length      |
+| `....` | unknown |
+| `0x3c` | filespec offset  |
+| `0x40` | filespec count   |
+| `0x44` | filecount offset |
+| `0x48` | file count       |
+| `0x4c` | unknown          |
+| `0x50` | file count       |
 	
 The magic number appears to denote a .tgx file with `0x0001000f`
 and a .tgw file with `0x0001000c`.
@@ -85,16 +71,23 @@ file, running it again will return 0. This seems to be
 ignored by the game, however, which has no qualms about loading
 mods where the checksum has been zeroed out.
 
-There are a number of unknowns (patterns appear in some, but
-are not understood yet), and some values are repeated, such as
-the file count, which may have some relation to the unknowns
-between the repetitions, as the unknowns seem to have similar
-sizes, and seem to get bigger the bigger the overall file is.
+The number of files appears 3 times: once for each following
+section of the header, and following the offset of that section
+in the file. The first offset should always be `0x74`, as the
+first part of the header seems to have constant size, while
+the following offsets will depend on the number of stored files,
+which will cause each section to be larger or smaller.
+
+### File Specifications
+
+In this section, each contained file is described, including
+its location in the game's filesystem, its length, and some
+other attributes that I've not worked out yet.
 	
-### FILES:
+## FILES:
 + **tgxlib.py**
-  This is just a library that contains all the abstractions and
-  handles the heavy lifting for finding and accessing the different
+  This is a library that contains all the abstractions and handles
+  the heavy lifting for finding and accessing the different
   files contained within a .tgx or .tgw file.
 + **tgxdumper.py**
   This takes a path to a .tgx file as argument and extracts all the
