@@ -29,4 +29,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Please provide a file to analyse")
         exit()
-    print("0x{0:08x}".format(checksum_32("sys.argv[1]"), 512))
+    print("0x{0:08x}".format(checksum_32(sys.argv[1]), 512))

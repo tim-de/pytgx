@@ -32,7 +32,7 @@ yet possible to write these files.
 
 The structure of it seems to be as follows:
 
-| offset | 32-bit value |
+| offset | Description |
 | :---: | :--- |
 | `0x00` | magic number |
 | `0x04` | unknown |
@@ -40,7 +40,7 @@ The structure of it seems to be as follows:
 | `0x0c` | packed version |
 | `0x10` | XOR checksum |
 | `0x14` | file length |
-| `....` | unknown |
+| `...` | unknown |
 | `0x3c` | filespec offset |
 | `0x40` | filespec count |
 | `0x44` | filelength offset |
@@ -90,14 +90,14 @@ used by the game to reference the files it needs
 
 The rest of the file spec is arranged as follows:
 
-| Size (bytes) | Name |
+| Offset | Description |
 | :---: | :--- |
-| 4 | File identifier |
-| 4 | File length |
-| 4 | Constant 1? |
-| 4 | Index in archive |
-| 4 | Header offset |
-| 4 | Header length |
+| `0x00` | File identifier |
+| `0x04` | File length |
+| `0x08` | Constant 1? |
+| `0x0c` | Index in archive |
+| `0x10` | Header offset |
+| `0x14` | Header length |
 
 The file identifier is generated using a fairly simple string
 hashing algorithm. The exact way this is used is not yet
