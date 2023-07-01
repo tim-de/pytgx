@@ -26,8 +26,8 @@ class SubFile:
     filepath = ""
     checksum = 0
     filelen = 0
-    startoffset = 0
-    endoffset = 0,
+    startoffset: int = 0
+    endoffset: int = 0,
 
     def __init__(self, buf):
         self.ident = FileIdentifier()
@@ -83,11 +83,15 @@ class LenSpec:
          self.ident.low, self.ident.high) = struct.unpack("8x I II", buf)
         
 class Header:
-    """A class to represent the header information at the start of
+    
+    """
+    A class to represent the header information at the start of
     a .TGX/.TGW file. It contains a dictionary of subfiles, referenced
     by the identifier given to them within the archive file, so that
     their offsets may be correctly retreived from the source file as
-    needed."""
+    needed.
+    """
+    
     version = 0
     checksum = 0
     filelen = 0
@@ -98,39 +102,51 @@ class Header:
         with self.filename.open(mode="rb") as fh:
             if verbosity > 0:
                 print(f"Reading file {self.filename}")
-            buf = fh.read(116)
-            #print(buf)
+            buf = fh.read(84)
             (version,
              self.checksum,
              self.filelen,
              byteshortname,
-             self.filecount) = struct.unpack("12x I I I 12x 2s 26x I 48x", buf)
+             self.filespec_offset,
+             self.filespec_count,
+             self.filelength_offset,
+             self.filelength_count,
+             self.fileposition_offset,
+             self.fileposition_count) = struct.unpack("12x I I I 12x 2s 22x II II II", buf)
             self.version = unpack_version_number(version)
             self.shortname = byteshortname.decode("ascii")
             if verbosity > 0:
-                print(f"Parsed header for {self.filename} ({self.shortname})\nVersion => {self.version}\nChecksum => {self.checksum:08x}\nLength => {self.filelen}B\nSubfiles => {self.filecount}")
+                print(f"Parsed header for {self.filename} ({self.shortname})\n"
+                      "Version => {self.version}\nChecksum => {self.checksum:08x}\n"
+                      "Length => {self.filelen}B\n"
+                      "Subfiles => {self.filespec_count}")
                 print("Parsing subfile headers")
-            for index in range(self.filecount):
+            fh.seek(self.filespec_offset)
+            for _0 in range(self.filespec_count):
                 buf = fh.read(104)
                 tempsubfilehdr = SubFile(buf)
                 self.subfiles[tempsubfilehdr.ident]=tempsubfilehdr
 
             lengthspecs = []
-            for index in range(self.filecount):
+            fh.seek(self.filelength_offset)
+            for _0 in range(self.filelength_count):
                 buf = fh.read(20)
                 lengthspecs.append(LenSpec(buf))
-                
-            for lspec in lengthspecs:
+
+            fh.seek(self.fileposition_offset)
+            for index in range(self.fileposition_count):
                 buf = fh.read(8)
-                (self.subfiles[lspec.ident].startoffset,
-                 self.subfiles[lspec.ident].endoffset) = struct.unpack("I I", buf)
+                (self.subfiles[lengthspecs[index].ident].startoffset: int,
+                 self.subfiles[lengthspecs[index].ident].endoffset: int) = struct.unpack("I I", buf)
                 if verbosity == 2:
-                    print(self.subfiles[lspec.ident])
+                    print(self.subfiles[lengthspecs[index].ident])
             if verbosity > 0:
                 print("All headers parsed")
 
     def dump(self, basedirname, verbosity=1):
-        """Dumps all the subfiles by calling the Subfile.dump method on each of them."""
+        """
+        Dumps all the subfiles by calling the Subfile.dump method on each of them.
+        """
         with self.filename.open(mode="rb") as infilehandle:
             if basedirname == "":
                 basedirname = ".".join(self.filename.parts[-1].split(".")[:-1])
@@ -144,12 +160,14 @@ class Header:
                 print("Done!")
 
 def unpack_version_number(packed_version):
-    """Unpacks the version number of the file from the form it appears in within the file."""
+    """
+    Unpacks the version number of the file from the form it appears in within the tgx file.
+    """
     unpacked_version = f"{packed_version % 100}"
-    packed_version = int(packed_version / 100)
+    packed_version //= 100
     while packed_version != 0:
         unpacked_version = f"{packed_version % 100}.{unpacked_version}"
-        packed_version = int(packed_version / 100)
+        packed_version //= 100
     return unpacked_version
     
                 
