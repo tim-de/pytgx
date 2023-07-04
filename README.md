@@ -116,6 +116,31 @@ of this file's header. For example, a .wav file has a header of
 36 bytes, and so for an archive containing only .wav files, the
 third file will have a header offset of `0x48` and a length of `0x24`.
 
+### Length Specifications
+
+The following section consists of the file lengths followed by the
+indices of the corresponding files in the form:
+`0xlength 0x000001 0x0index`.
+Each of these is padded with two empty 32-bit words, so the full
+length spec follows the format
+
+| Offset | Description |
+| :---: | :--- |
+| `0x00` | Padding `0x0` |
+| `0x04` | Padding `0x0` |
+| `0x08` | File length |
+| `0x0c` | Constant 1 |
+| `0x10` | Index in archive |
+
+### File locations
+
+The last header section contains the offsets of the subfiles in the
+archive file, stored as the start offset followed by the end offset,
+both as 32-bit words. There is no label of the index or anything like
+that; instead the previously specified order is assumed. I have not yet
+tested to see if changing the order of the elements of the above sections
+has any effect on the assumed order of this section.
+
 ## FILES:
 + **tgxlib.py**
   This is a library that contains all the abstractions and handles
