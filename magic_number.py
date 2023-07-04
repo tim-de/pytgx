@@ -1,6 +1,7 @@
 #!/usr/bin/pypy3
 
 import sys
+import os
 
 def getNumber(path: str) -> int:
     if path == "":
@@ -16,8 +17,11 @@ def getNumber(path: str) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Please provide a path")
+        print("Please provide at least one path")
         exit(-1)
-    path = sys.argv[1]
-    num = getNumber(path)
-    print(f"{path} => 0x{num:08x}")
+    pathlist = sys.argv[1:]
+    pathlist.sort(key=lambda p: getNumber(p.replace("/", "\\")))
+    for path in pathlist:
+        num = getNumber(path.replace("/", "\\"))
+        length = os.stat(path).st_size
+        print(f"{path:15s} \t=> l: 0x{length:08x} id: 0x{num:08x}")
